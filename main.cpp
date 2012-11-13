@@ -13,25 +13,6 @@ double SixHumpCamelBack(double *x){
     return (4-2.1*x[0]*x[0]+x[0]*x[0]*x[0]*x[0]/3)*x[0]*x[0] + x[0]*x[1] +
     (-4+4*x[1]*x[1])*x[1]*x[1];
 }
-// Isrinkimo paieskos algoritmas
-void Selection(double *dF, double *dX, int l, int r){
-    for (int i = l; i < r; i++){
-        int min = i;
-        for (int j = i+1; j <= r; j++)
-            if (dF[j] < dF[min]) min = j;
-        double tF = dF[i]; dF[i] = dF[min]; dF[min] = tF;
-        double tX[n];
-        for (int ii = 0; ii < n; ii++){
-            tX[ii] = dX[i*n+ii];
-        }
-        for (int ii = 0; ii < n; ii++){
-            dX[i*n+ii] = dX[min*n+ii];
-        }
-        for (int ii = 0; ii < n; ii++){
-            dX[min*n+ii] = tX[ii];
-        }
-    }
-}
 void RezultatuIsvedimas(int nCount, double dGlobF, double *dX){
     cout << nCount << " band. : \n";
     cout << "globF = " << dGlobF << endl;
@@ -41,12 +22,16 @@ void RezultatuIsvedimas(int nCount, double dGlobF, double *dX){
 }
 int main(){
     int N = 1000; // Iteraciju skaitiklis
+    int pN = 100; // Rodykliu masyvo dydis
     int count = 1;
     int stopingRule = 1; // 0: FOR N zingsniu; 1: WHILE > eps
+    int p = 0; // Rodykliu masyvo indeksas
     double x[n];
-    double *xAll = new double[N*n];
+    double **xAll = new double*[pN];
     double f;
-    double *fAll = new double[N];
+    double **fAll = new double*[pN];
+    xAll[p] = new double[N*n];
+    fAll[p] = new double[N];
     double globF = 1000000;
     double globX[n];
     double globMinimum = -1.031628453;
@@ -59,14 +44,14 @@ int main(){
         {
             for(int i = 0; i < n; ++i){
                 x[i] = GetRandomNumber(region[2*i], region[2*i+1]);
-                xAll[count*n+i] = x[i];
+                xAll[p][count*n+i] = x[i];
             }
             f = SixHumpCamelBack(&x[0]);
-            fAll[count] = f;
+            fAll[p][count] = f;
             if (f < globF){
                 globF = f;
                 for(int i = 0; i < n; ++i) globX[i] = x[i];
-                RezultatuIsvedimas(count, globF, &globX[0]);
+                RezultatuIsvedimas(p*N+count, globF, &globX[0]);
             }
         }
     } else {
@@ -74,45 +59,33 @@ int main(){
         {
             for(int i = 0; i < n; ++i){
                 x[i] = GetRandomNumber(region[2*i], region[2*i+1]);
-                xAll[count*n+i] = x[i];
+                xAll[p][count*n+i] = x[i];
             }
             f = SixHumpCamelBack(&x[0]);
-            fAll[count] = f;
+            fAll[p][count] = f;
             if (f < globF){
                 globF = f;
                 for(int i = 0; i < n; ++i) globX[i] = x[i];
-                RezultatuIsvedimas(count, globF, &globX[0]);
+                RezultatuIsvedimas(p*N+count, globF, &globX[0]);
             }
             count++;
             if (count >= N){
-                double *xAllTemp = xAll;
-                double *fAllTemp = fAll;
-                N = 2*N; // Padvigubiname masyvo dydi
-                xAll = new double[N*n];
-                fAll = new double[N*n];
-                for (int i=0; i<count; i++)
-                {
-                    xAll[i] = xAllTemp[i];
-                    fAll[i] = fAllTemp[i];
-                }
-                // Isvalome atminty (HEAP'a)
-                delete[] xAllTemp;
-                delete[] fAllTemp;
+                p++;
+                xAll[p] = new double[N*n];
+                fAll[p] = new double[N];
+                count = 0;
             }
         }
         
     }
     // Isvalome atminty (HEAP'a)
-    delete[] xAll;
-    delete[] fAll;    cout << "RANDOM SEARCH REZULTATAS: \nPo ";
-    RezultatuIsvedimas(count-1, globF, &globX[0]);
-    /*cout << "Pries rusiavima:" << endl;
-    for (int i=0; i<count; i++) {
-        RezultatuIsvedimas(i, fAll[i], &xAll[i*n]);
+    for(int i = 0; i < p; ++i){
+        delete [] xAll[i];
+        delete [] fAll[i];
     }
-    Selection(&fAll[0], &xAll[0], 0, count-1);
-    cout << "Po rusiavimo:" << endl;
-    for (int i=0; i<count; i++) {
-        RezultatuIsvedimas(i, fAll[i], &xAll[i*n]);
-    }*/
+    delete [] xAll;
+    delete [] fAll;
+
+    cout << "RANDOM SEARCH REZULTATAS: \nPo ";
+    RezultatuIsvedimas(p*N+count-1, globF, &globX[0]);
 }
