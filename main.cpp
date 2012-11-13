@@ -41,12 +41,12 @@ void RezultatuIsvedimas(int nCount, double dGlobF, double *dX){
 }
 int main(){
     int N = 1000; // Iteraciju skaitiklis
-    int count = 0;
+    int count = 1;
     int stopingRule = 1; // 0: FOR N zingsniu; 1: WHILE > eps
     double x[n];
-    double xAll[N][n];
+    double *xAll = new double[N*n];
     double f;
-    double fAll[N];
+    double *fAll = new double[N];
     double globF = 1000000;
     double globX[n];
     double globMinimum = -1.031628453;
@@ -59,7 +59,7 @@ int main(){
         {
             for(int i = 0; i < n; ++i){
                 x[i] = GetRandomNumber(region[2*i], region[2*i+1]);
-                xAll[count][i] = x[i];
+                xAll[count*n+i] = x[i];
             }
             f = SixHumpCamelBack(&x[0]);
             fAll[count] = f;
@@ -74,7 +74,7 @@ int main(){
         {
             for(int i = 0; i < n; ++i){
                 x[i] = GetRandomNumber(region[2*i], region[2*i+1]);
-                xAll[count][i] = x[i];
+                xAll[count*n+i] = x[i];
             }
             f = SixHumpCamelBack(&x[0]);
             fAll[count] = f;
@@ -84,17 +84,35 @@ int main(){
                 RezultatuIsvedimas(count, globF, &globX[0]);
             }
             count++;
+            if (count >= N){
+                double *xAllTemp = xAll;
+                double *fAllTemp = fAll;
+                N = 2*N; // Padvigubiname masyvo dydi
+                xAll = new double[N*n];
+                fAll = new double[N*n];
+                for (int i=0; i<count; i++)
+                {
+                    xAll[i] = xAllTemp[i];
+                    fAll[i] = fAllTemp[i];
+                }
+                // Isvalome atminty (HEAP'a)
+                delete[] xAllTemp;
+                delete[] fAllTemp;
+            }
         }
+        
     }
-    cout << "RANDOM SEARCH REZULTATAS: \nPo ";
+    // Isvalome atminty (HEAP'a)
+    delete[] xAll;
+    delete[] fAll;    cout << "RANDOM SEARCH REZULTATAS: \nPo ";
     RezultatuIsvedimas(count-1, globF, &globX[0]);
     /*cout << "Pries rusiavima:" << endl;
     for (int i=0; i<count; i++) {
-        RezultatuIsvedimas(i, fAll[i], xAll[i]);
+        RezultatuIsvedimas(i, fAll[i], &xAll[i*n]);
     }
-    Selection(&fAll[0], &xAll[0][0], 0, count-1);
+    Selection(&fAll[0], &xAll[0], 0, count-1);
     cout << "Po rusiavimo:" << endl;
     for (int i=0; i<count; i++) {
-        RezultatuIsvedimas(i, fAll[i], xAll[i]);
+        RezultatuIsvedimas(i, fAll[i], &xAll[i*n]);
     }*/
 }
